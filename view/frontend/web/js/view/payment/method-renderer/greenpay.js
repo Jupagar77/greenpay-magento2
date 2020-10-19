@@ -203,8 +203,6 @@ define(
                     "kountSession": window.kountSession
                 };
 
-                console.log(cardData);
-
                 this.setPaymentMethodNonce(this.pack(cardData));
                 this._super(data, event);
             },
