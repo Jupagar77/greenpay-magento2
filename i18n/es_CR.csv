@@ -1,0 +1,29 @@
+Authorize,Autorizar
+Authorize & Capture,Autorizar y capturar
+Credit Card Information,Información de tarjeta de crédito/débito
+Credit Card Number,Número de tarjeta de crédito/débito
+Expiration Date,Fecha de caducidad
+Card Verification Number,Número de verificación de tarjeta
+What is this?,¿Que es esto?
+Place Order,Realizar pedido
+Invalid credit card number.,Número de tarjeta de crédito/débito no válido.
+Invalid credit card type.,Tipo de tarjeta de crédito/débito invalida.
+Invalid expiration date.,Fecha de expiracion inválida.
+Invalid verification number.,Número de verificación no válido
+Bananacode GreenPay,Bananacode GreenPay
+Enabled,Habilitado
+Title,Título
+Secret,Secreto
+Public Key,Llave pública
+Terminal,Terminal
+Merchant Id,Identificación del comerciante
+Sanbox,Sanbox
+Sandbox Secret,Sandbox Secret
+Sandbox Public Key,Clave pública de sandbox
+Sandbox Terminal,Terminal Sandbox
+Sandbox Merchant Id,ID de comerciante de sandbox
+Payment Action,Acción de pago
+Payment From Applicable Countries,Pago de países aplicables
+Payment From Specific Countries,Pago de países específicos
+Sort Order,Orden de clasificación
+Credit Card Types,Tipos de tarjeta de credito

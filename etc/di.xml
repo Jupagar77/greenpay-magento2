@@ -1,0 +1,174 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © 2016 Magento. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <!-- Payment Method Facade configuration -->
+    <virtualType name="GreenPayFacade" type="Magento\Payment\Model\Method\Adapter">
+        <arguments>
+            <argument name="code" xsi:type="const">\Bananacode\GreenPay\Model\Ui\ConfigProvider::CODE</argument>
+            <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
+            <argument name="infoBlockType" xsi:type="string">Bananacode\GreenPay\Block\Info</argument>
+            <argument name="valueHandlerPool" xsi:type="object">GreenPayValueHandlerPool</argument>
+            <argument name="commandPool" xsi:type="object">GreenPayCommandPool</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Configuration reader -->
+    <virtualType name="GreenPayConfig" type="Magento\Payment\Gateway\Config\Config">
+        <arguments>
+            <argument name="methodCode" xsi:type="const">\Bananacode\GreenPay\Model\Ui\ConfigProvider::CODE</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Logger, initialized with GreenPayConfig -->
+    <virtualType name="GreenPayLogger" type="Magento\Payment\Model\Method\Logger">
+        <arguments>
+            <argument name="config" xsi:type="object">GreenPayConfig</argument>
+        </arguments>
+    </virtualType>
+
+    <type name="Bananacode\GreenPay\Gateway\Http\Client\ClientMock">
+        <arguments>
+            <argument name="logger" xsi:type="object">GreenPayLogger</argument>
+        </arguments>
+    </type>
+
+    <!-- Commands infrastructure -->
+    <virtualType name="GreenPayCommandPool" type="Magento\Payment\Gateway\Command\CommandPool">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="authorize" xsi:type="string">GreenPayAuthorizeCommand</item>
+                <item name="capture" xsi:type="string">GreenPayCaptureCommand</item>
+                <item name="sale" xsi:type="string">GreenPaySaleCommand</item>
+                <item name="void" xsi:type="string">GreenPayVoidCommand</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Authorize command -->
+    <virtualType name="GreenPayAuthorizeCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">GreenPayAuthorizationRequest</argument>
+            <argument name="handler" xsi:type="object">GreenPayResponseHandlerComposite</argument>
+            <argument name="transferFactory" xsi:type="object">Bananacode\GreenPay\Gateway\Http\TransferFactory</argument>
+            <argument name="client" xsi:type="object">Bananacode\GreenPay\Gateway\Http\Client\ClientMock</argument>
+            <argument name="errorMessageMapper" xsi:type="object">Bananacode\GreenPay\Gateway\ErrorMapper\VirtualErrorMessageMapper</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="GreenPayAuthorizationRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">
+        <arguments>
+            <argument name="builders" xsi:type="array">
+                <item name="transaction" xsi:type="string">Bananacode\GreenPay\Gateway\Request\AuthorizationRequest</item>
+                <item name="mockData" xsi:type="string">Bananacode\GreenPay\Gateway\Request\MockDataRequest</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <type name="Bananacode\GreenPay\Gateway\Request\AuthorizationRequest">
+        <arguments>
+            <argument name="config" xsi:type="object">GreenPayConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Authorization & Capture command  -->
+    <virtualType name="GreenPaySaleCommand" type="GreenPayAuthorizeCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">GreenPaySaleRequest</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="GreenPaySaleRequest" type="Magento\Payment\Gateway\Request\BuilderComposite">
+        <arguments>
+            <argument name="builders" xsi:type="array">
+                <item name="authorize" xsi:type="string">GreenPayAuthorizationRequest</item>
+                <item name="settlement" xsi:type="string">Magento\GreenPay\Gateway\Request\SettlementDataBuilder</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Capture command -->
+    <virtualType name="GreenPayCaptureCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">Bananacode\GreenPay\Gateway\Request\CaptureRequest</argument>
+            <argument name="handler" xsi:type="object">Bananacode\GreenPay\Gateway\Response\TxnIdHandler</argument>
+            <argument name="transferFactory" xsi:type="object">Bananacode\GreenPay\Gateway\Http\TransferFactory</argument>
+            <argument name="validator" xsi:type="object">Bananacode\GreenPay\Gateway\Validator\ResponseCodeValidator</argument>
+            <argument name="client" xsi:type="object">Bananacode\GreenPay\Gateway\Http\Client\ClientMock</argument>
+            <argument name="errorMessageMapper" xsi:type="object">Bananacode\GreenPay\Gateway\ErrorMapper\VirtualErrorMessageMapper</argument>
+        </arguments>
+    </virtualType>
+    <type name="Bananacode\GreenPay\Gateway\Request\CaptureRequest">
+        <arguments>
+            <argument name="config" xsi:type="object">GreenPayConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Void command -->
+    <virtualType name="GreenPayVoidCommand" type="Magento\Payment\Gateway\Command\GatewayCommand">
+        <arguments>
+            <argument name="requestBuilder" xsi:type="object">Bananacode\GreenPay\Gateway\Request\VoidRequest</argument>
+            <argument name="handler" xsi:type="object">Bananacode\GreenPay\Gateway\Response\TxnIdHandler</argument>
+            <argument name="transferFactory" xsi:type="object">Bananacode\GreenPay\Gateway\Http\TransferFactory</argument>
+            <argument name="validator" xsi:type="object">Bananacode\GreenPay\Gateway\Validator\ResponseCodeValidator</argument>
+            <argument name="client" xsi:type="object">Bananacode\GreenPay\Gateway\Http\Client\ClientMock</argument>
+        </arguments>
+    </virtualType>
+    <type name="Bananacode\GreenPay\Gateway\Request\VoidRequest">
+        <arguments>
+            <argument name="config" xsi:type="object">GreenPayConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Response handlers -->
+    <virtualType name="GreenPayResponseHandlerComposite" type="Magento\Payment\Gateway\Response\HandlerChain">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="txnid" xsi:type="string">Bananacode\GreenPay\Gateway\Response\TxnIdHandler</item>
+                <item name="fraud" xsi:type="string">Bananacode\GreenPay\Gateway\Response\FraudHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Value handlers infrastructure -->
+    <virtualType name="GreenPayValueHandlerPool" type="Magento\Payment\Gateway\Config\ValueHandlerPool">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="default" xsi:type="string">GreenPayConfigValueHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="GreenPayConfigValueHandler" type="Magento\Payment\Gateway\Config\ConfigValueHandler">
+        <arguments>
+            <argument name="configInterface" xsi:type="object">GreenPayConfig</argument>
+        </arguments>
+    </virtualType>
+
+    <type name="Bananacode\GreenPay\Block\Info">
+        <arguments>
+            <argument name="config" xsi:type="object">GreenPayConfig</argument>
+        </arguments>
+    </type>
+
+    <!-- Error Mapping-->
+    <virtualType name="Bananacode\GreenPay\Gateway\ErrorMapper\VirtualConfigReader" type="Magento\Payment\Gateway\ErrorMapper\VirtualConfigReader">
+        <arguments>
+            <argument name="fileName" xsi:type="string">greenpay_error_mapping.xml</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Bananacode\GreenPay\Gateway\ErrorMapper\VirtualMappingData" type="Magento\Payment\Gateway\ErrorMapper\MappingData">
+        <arguments>
+            <argument name="reader" xsi:type="object">Bananacode\GreenPay\Gateway\ErrorMapper\VirtualConfigReader</argument>
+            <argument name="cacheId" xsi:type="string">greenpay_error_mapper</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Bananacode\GreenPay\Gateway\ErrorMapper\VirtualErrorMessageMapper" type="Magento\Payment\Gateway\ErrorMapper\ErrorMessageMapper">
+        <arguments>
+            <argument name="messageMapping" xsi:type="object">Bananacode\GreenPay\Gateway\ErrorMapper\VirtualMappingData</argument>
+        </arguments>
+    </virtualType>
+
+
+</config>

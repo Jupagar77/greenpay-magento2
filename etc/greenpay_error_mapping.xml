@@ -1,0 +1,26 @@
+<mapping xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Payment:etc/error_mapping.xsd">
+    <message_list>
+        <message code="01" translate="true">La operación ha sido rechazada: Consulte el banco emisor</message>
+        <message code="03" translate="true">La operación ha sido rechazada: Comercio inválido</message>
+        <message code="04" translate="true">La operación ha sido rechazada: Retire la tarjeta / Tomar tarjeta fuera</message>
+        <message code="05" translate="true">La operación ha sido rechazada: Denegado</message>
+        <message code="12" translate="true">La operación ha sido rechazada: Transacción inválida</message>
+        <message code="13" translate="true">La operación ha sido rechazada: Cantidad no válida intente de nuevo</message>
+        <message code="14" translate="true">La operación ha sido rechazada: Tarjeta no valida</message>
+        <message code="19" translate="true">La operación ha sido rechazada: Vuelva a introducir la transacciónn</message>
+        <message code="31" translate="true">La operación ha sido rechazada: Banco no compatible</message>
+        <message code="41" translate="true">La operación ha sido rechazada: Tarjeta perdida</message>
+        <message code="43" translate="true">La operación ha sido rechazada: Retener y llamar</message>
+        <message code="51" translate="true">La operación ha sido rechazada: Fondos insuficientes</message>
+        <message code="54" translate="true">La operación ha sido rechazada: Tarjeta caducada</message>
+        <message code="55" translate="true">La operación ha sido rechazada: Pin incorrecto</message>
+        <message code="58" translate="true">La operación ha sido rechazada: Función no permitida</message>
+        <message code="62" translate="true">La operación ha sido rechazada: Error al autorizar</message>
+        <message code="63" translate="true">La operación ha sido rechazada: Error al autorizar</message>
+        <message code="65" translate="true">La operación ha sido rechazada: Error al autorizar</message>
+        <message code="78" translate="true">La operación ha sido rechazada: Error al autorizar</message>
+        <message code="89" translate="true">La operación ha sido rechazada: Terminal no válido</message>
+        <message code="91" translate="true">La operación ha sido rechazada: Banco Emisor no responde</message>
+        <message code="96" translate="true">La operación ha sido rechazada: No soportado</message>
+    </message_list>
+</mapping>
