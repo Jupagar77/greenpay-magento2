@@ -170,5 +170,7 @@
         </arguments>
     </virtualType>
 
-
+    <!-- WebHook -->
+    <preference for="Bananacode\GreenPay\Api\GreenPayInterface"
+                type="Bananacode\GreenPay\Model\GreenPay" />
 </config>

@@ -196,7 +196,7 @@ define(
                             "year": (this.creditCardExpYear())
                         },
                         "cardNumber": this.creditCardNumber(),
-                        "cvc": this.creditCardVerificationNumber(),
+                        "cvc": this.creditCardVerificationNumber()
                         //"nickname": this.creditCardType() + this.makeid(7)
                     },
                     "tokenize": false,
