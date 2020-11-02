@@ -54,8 +54,13 @@ class GreenPay implements \Bananacode\GreenPay\Api\GreenPayInterface {
                 $order->setGreenpayResponse($hookResponse);
 
                 if(!(boolean)$hookResponseObj->result->success) {
-                    $order->setState(\Magento\Sales\Model\Order::STATUS_FRAUD);
-                    $order->setStatus(\Magento\Sales\Model\Order::STATUS_FRAUD);
+                    if($hookResponseObj->result->resp_code == 996) {
+                        $order->setState(\Magento\Sales\Model\Order::STATUS_FRAUD);
+                        $order->setStatus(\Magento\Sales\Model\Order::STATUS_FRAUD);
+                    } else {
+                        $order->setState(\Magento\Sales\Model\Order::STATE_HOLDED);
+                        $order->setStatus(\Magento\Sales\Model\Order::STATE_HOLDED);
+                    }
                 }
 
                 $this->_orderRepository->save($order);
