@@ -23,13 +23,13 @@ class ClientMock implements ClientInterface
     /**
      * GreenPay Sandbox URLS
      */
+    const SANDBOX_CHECKOUT_URL = 'https://sandbox-checkout.greenpay.me/kount';
     const SANDBOX_PAYMENT_URL = 'https://sandbox-merchant.greenpay.me';
-    const SANDBOX_CHECKOUT_URL = 'https://sandbox-checkout.greenpay.me';
 
     /**
      * GreenPay Production URLS
      */
-    const CHECKOUT_URL = 'https://checkout.greenpay.me';
+    const CHECKOUT_URL = 'https://checkout.greenpay.me/kount';
     const PAYMENT_URL = 'https://merchant.greenpay.me';
 
     /**
@@ -48,21 +48,28 @@ class ClientMock implements ClientInterface
     private $_storeManager;
 
     /**
+     * @var \Magento\Sales\Model\Order
+     */
+    private $_orderRepository;
+
+    /**
      * ClientMock constructor.
-     *
      * @param Logger $logger
      * @param \Magento\Framework\HTTP\Client\Curl $curl
      * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \Magento\Sales\Model\Order $orderRepository
      */
     public function __construct(
         Logger $logger,
         \Magento\Framework\HTTP\Client\Curl $curl,
-        \Magento\Store\Model\StoreManagerInterface $storeManager
+        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Sales\Model\Order $orderRepository
     )
     {
         $this->logger = $logger;
         $this->_curl = $curl;
         $this->_storeManager = $storeManager;
+        $this->_orderRepository = $orderRepository;
     }
 
     /**
@@ -99,8 +106,9 @@ class ClientMock implements ClientInterface
             'amount' => (float)($requestData['amount']) ?? '',
             'currency' => $this->_storeManager->getStore()->getBaseCurrencyCode(),
             'description' => 'Transaction order #' . ($requestData['order_id']) ?? '',
-            'orderReference' => ($requestData['order_id']) ?? '',
+            'orderReference' => ($requestData['order_increment']) ?? '',
             'callback' => '',
+            'additional'     => $this->getCustomerAdditionalData($requestData['order_id'])
         ];
 
         $url = self::PAYMENT_URL;
@@ -161,4 +169,63 @@ class ClientMock implements ClientInterface
 
         return $response;
     }
+
+    /**
+     * @param $orderId
+     * @return array
+     */
+    private function getCustomerAdditionalData($orderId)
+    {
+        try {
+            /**
+             * $order \Magento\Sales\Model\Order
+             */
+            $order = $this->_orderRepository->load($orderId);
+        } catch (\Exception $e) {
+            return [
+
+            ];
+        }
+
+        $billingAddress = array(
+            'country'  => $order->getBillingAddress()->getCountryId(),
+            'province' => $order->getBillingAddress()->getRegion(),
+            'city'     => $order->getBillingAddress()->getCity(),
+            'street1'  => $order->getBillingAddress()->getStreet(),
+            'zip'      => $order->getBillingAddress()->getPostcode()
+        );
+
+        $shippingAddress = $billingAddress;
+        if (!$order->getIsVirtual()) {
+            $shippingAddress = array(
+                'country'  => $order->getShippingAddress()->getCountryId(),
+                'province' => $order->getShippingAddress()->getRegion(),
+                'city'     => $order->getShippingAddress()->getCity(),
+                'street1'  => $order->getShippingAddress()->getStreet(),
+                'zip'      => $order->getShippingAddress()->getPostcode()
+            );
+        }
+
+        $items = $order->getItems();
+        $products = array();
+        foreach ($items as $item) {
+            $object['description'] = $item->getName();
+            $object['skuId']       = $item->getProductId();
+            $object['quantity']    = intval($item->getQtyOrdered());
+            $object['price']       = (float) number_format((float) $item->getPrice(), 2, '.', '');
+            $object['type']        = $item->getProductType();
+            array_push($products, $object);
+        }
+
+        return array(
+            'customer' => array(
+                'name' => $order->getBillingAddress()->getFirstname() .' '.$order->getBillingAddress()->getLastname(),
+                'email' => $order->getBillingAddress()->getEmail(),
+                'shippingAddress' => $shippingAddress,
+                'billingAddress' => $billingAddress
+            ),
+            "products" => $products
+        );
+    }
+
 }
