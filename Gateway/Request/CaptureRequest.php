@@ -83,7 +83,7 @@ class CaptureRequest implements BuilderInterface
             'amount' => $this->formatPrice($this->subjectReader->readAmount($buildSubject)),
             'payment_method_nonce' => (array)json_decode($payment->getAdditionalInformation('payment_method_nonce')),
             'order_increment' => $order->getOrderIncrementId(),
-            'order_id' => $order->getId(),
+            'additional' => $this->getCustomerAdditionalData($order),
             'merchant_id' => $this->_encryptor->decrypt($this->config->getValue(
                 $sandbox ? 'merchant_id_sandbox' : 'merchant_id',
                 $order->getStoreId()
@@ -98,5 +98,60 @@ class CaptureRequest implements BuilderInterface
             )),
             'sandbox' => $sandbox
         ];
+    }
+
+    /**
+     * @param $order \Magento\Payment\Gateway\Data\OrderAdapterInterface
+     * @return bool|array
+     */
+    private function getCustomerAdditionalData($order)
+    {
+        try {
+            $billingAddress = [];
+            if($order->getBillingAddress()) {
+                $billingAddress = array(
+                    'country'  => $order->getBillingAddress()->getCountryId(),
+                    'province' => $order->getBillingAddress()->getRegionCode(),
+                    'city'     => $order->getBillingAddress()->getCity(),
+                    'street1'  => $order->getBillingAddress()->getStreetLine1(),
+                    'zip'      => $order->getBillingAddress()->getPostcode()
+                );
+            }
+
+            $shippingAddress = $billingAddress;
+            if ($order->getShippingAddress()) {
+                $shippingAddress = array(
+                    'country'  => $order->getShippingAddress()->getCountryId(),
+                    'province' => $order->getShippingAddress()->getRegionCode(),
+                    'city'     => $order->getShippingAddress()->getCity(),
+                    'street1'  => $order->getShippingAddress()->getStreetLine1(),
+                    'zip'      => $order->getShippingAddress()->getPostcode()
+                );
+            }
+
+            $products = array();
+            if($items = $order->getItems()) {
+                foreach ($items as $item) {
+                    $object['description'] = $item->getName();
+                    $object['skuId']       = $item->getProductId();
+                    $object['quantity']    = intval($item->getQtyOrdered());
+                    $object['price']       = (float) number_format((float) $item->getPrice(), 2, '.', '');
+                    $object['type']        = $item->getProductType();
+                    array_push($products, $object);
+                }
+            }
+
+            return array(
+                'customer' => array(
+                    'name' => $order->getBillingAddress()->getFirstname() .' '.$order->getBillingAddress()->getLastname(),
+                    'email' => $order->getBillingAddress()->getEmail(),
+                    'shippingAddress' => $shippingAddress,
+                    'billingAddress' => $billingAddress
+                ),
+                "products" => $products
+            );
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 }

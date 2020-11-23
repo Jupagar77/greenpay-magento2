@@ -105,11 +105,14 @@ class ClientMock implements ClientInterface
             'terminal' => ($requestData['terminal']) ?? '',
             'amount' => (float)($requestData['amount']) ?? '',
             'currency' => $this->_storeManager->getStore()->getBaseCurrencyCode(),
-            'description' => 'Transaction order #' . ($requestData['order_id']) ?? '',
+            'description' => 'Transaction order #' . ($requestData['order_increment']) ?? '',
             'orderReference' => ($requestData['order_increment']) ?? '',
-            'callback' => '',
-            'additional'     => $this->getCustomerAdditionalData($requestData['order_id'])
+            'callback' => ''
         ];
+
+        if($requestData['additional']) {
+            $parameters['additional'] = $requestData['additional'];
+        }
 
         $url = self::PAYMENT_URL;
         if (isset($requestData['sandbox'])) {
@@ -168,64 +171,6 @@ class ClientMock implements ClientInterface
         }
 
         return $response;
-    }
-
-    /**
-     * @param $orderId
-     * @return array
-     */
-    private function getCustomerAdditionalData($orderId)
-    {
-        try {
-            /**
-             * $order \Magento\Sales\Model\Order
-             */
-            $order = $this->_orderRepository->load($orderId);
-        } catch (\Exception $e) {
-            return [
-
-            ];
-        }
-
-        $billingAddress = array(
-            'country'  => $order->getBillingAddress()->getCountryId(),
-            'province' => $order->getBillingAddress()->getRegion(),
-            'city'     => $order->getBillingAddress()->getCity(),
-            'street1'  => $order->getBillingAddress()->getStreet(),
-            'zip'      => $order->getBillingAddress()->getPostcode()
-        );
-
-        $shippingAddress = $billingAddress;
-        if (!$order->getIsVirtual()) {
-            $shippingAddress = array(
-                'country'  => $order->getShippingAddress()->getCountryId(),
-                'province' => $order->getShippingAddress()->getRegion(),
-                'city'     => $order->getShippingAddress()->getCity(),
-                'street1'  => $order->getShippingAddress()->getStreet(),
-                'zip'      => $order->getShippingAddress()->getPostcode()
-            );
-        }
-
-        $items = $order->getItems();
-        $products = array();
-        foreach ($items as $item) {
-            $object['description'] = $item->getName();
-            $object['skuId']       = $item->getProductId();
-            $object['quantity']    = intval($item->getQtyOrdered());
-            $object['price']       = (float) number_format((float) $item->getPrice(), 2, '.', '');
-            $object['type']        = $item->getProductType();
-            array_push($products, $object);
-        }
-
-        return array(
-            'customer' => array(
-                'name' => $order->getBillingAddress()->getFirstname() .' '.$order->getBillingAddress()->getLastname(),
-                'email' => $order->getBillingAddress()->getEmail(),
-                'shippingAddress' => $shippingAddress,
-                'billingAddress' => $billingAddress
-            ),
-            "products" => $products
-        );
     }
 
 }
