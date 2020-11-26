@@ -127,7 +127,7 @@ class ClientMock implements ClientInterface
         if($response  = $this->_curl->getBody()){
             $response = (array)json_decode($response);
             if (is_array($response)) {
-                if (isset($response['session']) & isset($response['token'])) {
+                if (isset($response['session']) && isset($response['token'])) {
                     return $response;
                 } else {
                     $this->logger->debug($response);

@@ -15,17 +15,25 @@ class GreenPay implements \Bananacode\GreenPay\Api\GreenPayInterface {
     protected $_searchCriteriaBuilder;
 
     /**
+     * @var \Magento\Sales\Model\Order\Status\HistoryFactory
+     */
+    protected $_orderHistoryFactory;
+
+    /**
      * GreenPay constructor.
      * @param \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
      * @param \Magento\Sales\Api\OrderRepositoryInterface $orderRepository
+     * @param \Magento\Sales\Model\Order\Status\HistoryFactory $orderHistoryFactory
      */
     public function __construct(
         \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder,
-        \Magento\Sales\Api\OrderRepositoryInterface $orderRepository
+        \Magento\Sales\Api\OrderRepositoryInterface $orderRepository,
+        \Magento\Sales\Model\Order\Status\HistoryFactory $orderHistoryFactory
     )
     {
         $this->_searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->_orderRepository = $orderRepository;
+        $this->_orderHistoryFactory = $orderHistoryFactory;
     }
 
     /**
@@ -37,7 +45,7 @@ class GreenPay implements \Bananacode\GreenPay\Api\GreenPayInterface {
     public function checkout()
     {
         $hookResponse = file_get_contents('php://input');
-        $hookResponseObj = json_decode($hookResponse);
+        $hookResponseObj = (Object)json_decode($hookResponse);
         if(isset($hookResponseObj->result) && isset($hookResponseObj->orderId)) {
             $searchCriteria = $this->_searchCriteriaBuilder
                 ->addFilter('increment_id', $hookResponseObj->orderId, 'eq')
@@ -60,6 +68,29 @@ class GreenPay implements \Bananacode\GreenPay\Api\GreenPayInterface {
                     } else {
                         $order->setState(\Magento\Sales\Model\Order::STATE_HOLDED);
                         $order->setStatus(\Magento\Sales\Model\Order::STATE_HOLDED);
+                    }
+                } else {
+
+                    if ($order->canComment()) {
+                        $history = $this->_orderHistoryFactory->create()
+                            ->setStatus($order->getStatus())
+                            ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
+                            ->setComment(
+                                __('GreenPay bank reference: %1.', $hookResponseObj->result->retrieval_ref_num)
+                            )->setIsCustomerNotified(false)
+                            ->setIsVisibleOnFront(false);
+
+                        $order->addStatusHistory($history);
+
+                        $history = $this->_orderHistoryFactory->create()
+                            ->setStatus($order->getStatus())
+                            ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
+                            ->setComment(
+                                __('GreenPay bank authorization number: %1.', $hookResponseObj->result->authorization_id_resp)
+                            )->setIsCustomerNotified(false)
+                            ->setIsVisibleOnFront(false);
+
+                        $order->addStatusHistory($history);
                     }
                 }
 
