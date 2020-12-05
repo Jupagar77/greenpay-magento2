@@ -20,8 +20,6 @@ class SettlementDataRequest implements BuilderInterface
     public function build(array $buildSubject)
     {
         //todo?
-        return [
-
-        ];
+        return [];
     }
 }

@@ -42,6 +42,7 @@ final class ConfigProvider implements ConfigProviderInterface
      */
     public function getConfig()
     {
+        $this->config->setMethodCode(self::CODE);
         $sandbox = $this->config->getValue(
             'sandbox'
         );

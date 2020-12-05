@@ -27,8 +27,6 @@ class MockDataRequest implements BuilderInterface
     {
 
         //todo?
-        return [
-
-        ];
+        return [];
     }
 }

@@ -38,8 +38,6 @@ class AuthorizationRequest implements BuilderInterface
     public function build(array $buildSubject)
     {
         //todo?
-        return [
-
-        ];
+        return [];
     }
 }

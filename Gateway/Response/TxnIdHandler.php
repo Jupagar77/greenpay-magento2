@@ -23,15 +23,6 @@ class TxnIdHandler implements HandlerInterface
      */
     public function handle(array $handlingSubject, array $response)
     {
-        if (!isset($handlingSubject['payment'])
-            || !$handlingSubject['payment'] instanceof PaymentDataObjectInterface
-        ) {
-            throw new \InvalidArgumentException('Payment data object should be provided');
-        }
-
-        /** @var PaymentDataObjectInterface $paymentDO */
-        $paymentDO = $handlingSubject['payment'];
-        $payment = $paymentDO->getPayment();
-        $payment->setAdditionalInformation('response', json_encode($response));
+        //todo?
     }
 }

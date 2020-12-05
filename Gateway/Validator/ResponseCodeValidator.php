@@ -43,42 +43,6 @@ class ResponseCodeValidator extends AbstractValidator
     );
 
     /**
-     * @var \Magento\Sales\Api\OrderRepositoryInterface
-     */
-    protected $_orderRepository;
-
-    /**
-     * @var \Magento\Framework\Api\SearchCriteriaBuilder
-     */
-    protected $_searchCriteriaBuilder;
-
-    /**
-     * @var \Magento\Sales\Model\Order\Status\HistoryFactory
-     */
-    protected $_orderHistoryFactory;
-
-    /**
-     * ResponseCodeValidator constructor.
-     * @param \Magento\Payment\Gateway\Validator\ResultInterfaceFactory $resultFactory
-     * @param \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
-     * @param \Magento\Sales\Api\OrderRepositoryInterface $orderRepository
-     * @param \Magento\Sales\Model\Order\Status\HistoryFactory $orderHistoryFactory
-     */
-    public function __construct(
-        \Magento\Payment\Gateway\Validator\ResultInterfaceFactory $resultFactory,
-        \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder,
-        \Magento\Sales\Api\OrderRepositoryInterface $orderRepository,
-        \Magento\Sales\Model\Order\Status\HistoryFactory $orderHistoryFactory
-    )
-    {
-        $this->_searchCriteriaBuilder = $searchCriteriaBuilder;
-        $this->_orderRepository = $orderRepository;
-        $this->_orderHistoryFactory = $orderHistoryFactory;
-
-        parent::__construct($resultFactory);
-    }
-
-    /**
      * Performs validation of result code
      *
      * @param array $validationSubject
@@ -91,51 +55,7 @@ class ResponseCodeValidator extends AbstractValidator
         }
 
         $response = $validationSubject['response'];
-
         if ($this->isSuccessfulTransaction($response)) {
-
-            $hookResponseObj = (Object)$response;
-            if(isset($hookResponseObj->result) && isset($hookResponseObj->orderId)) {
-                $searchCriteria = $this->_searchCriteriaBuilder
-                    ->addFilter('increment_id', $hookResponseObj->orderId, 'eq')
-                    ->create();
-
-                $orderList = $this->_orderRepository
-                    ->getList($searchCriteria)
-                    ->getItems();
-
-                /** @var \Magento\Sales\Model\Order $order */
-                $order = count($orderList) ? array_values($orderList)[0] : null;
-
-                if($order) {
-                    if((boolean)$hookResponseObj->result->success) {
-                        if ($order->canComment()) {
-                            $history = $this->_orderHistoryFactory->create()
-                                ->setStatus($order->getStatus())
-                                ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
-                                ->setComment(
-                                    __('GreenPay bank reference: %1.', $hookResponseObj->result->retrieval_ref_num)
-                                )->setIsCustomerNotified(false)
-                                ->setIsVisibleOnFront(false);
-
-                            $order->addStatusHistory($history);
-
-                            $history = $this->_orderHistoryFactory->create()
-                                ->setStatus($order->getStatus())
-                                ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
-                                ->setComment(
-                                    __('GreenPay bank authorization number: %1.', $hookResponseObj->result->authorization_id_resp)
-                                )->setIsCustomerNotified(false)
-                                ->setIsVisibleOnFront(false);
-
-                            $order->addStatusHistory($history);
-
-                            $this->_orderRepository->save($order);
-                        }
-                    }
-                }
-            }
-
             return $this->createResult(
                 true,
                 []
