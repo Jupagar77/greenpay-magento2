@@ -81,6 +81,8 @@ class GreenPay implements \Bananacode\GreenPay\Api\GreenPayInterface {
                             ->setIsVisibleOnFront(false);
 
                         $order->addStatusHistory($history);
+
+                        $this->_orderRepository->save($order);
                     }
                 }
             }
