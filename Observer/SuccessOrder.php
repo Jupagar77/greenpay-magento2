@@ -46,7 +46,7 @@ class SuccessOrder extends AbstractDataAssignObserver
 
         if($order) {
             $response = $order->getPayment()->getAdditionalInformation();
-            if ($order->canComment()) {
+            if ($order->canComment() && isset($response['retrieval_ref_num']) && isset($response['authorization_id_resp'])) {
                 $history = $this->_orderHistoryFactory->create()
                     ->setStatus($order->getStatus())
                     ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
