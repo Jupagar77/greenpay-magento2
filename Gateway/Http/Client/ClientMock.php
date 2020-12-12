@@ -130,6 +130,7 @@ class ClientMock implements ClientInterface
                 if (isset($response['session']) && isset($response['token'])) {
                     return $response;
                 } else {
+                    $this->logger->debug(['payment order error...']);
                     $this->logger->debug($response);
                 }
             }
@@ -165,9 +166,16 @@ class ClientMock implements ClientInterface
         ];
         $this->_curl->setHeaders($headers);
         $this->_curl->post($url, json_encode($parameters));
-        if($response = $this->_curl->getBody()) {
-            $response = (array)json_decode($response);
-            $this->logger->debug($response);
+
+        //Validate timeout
+        if(intval($this->_curl->getStatus() == 504)) {
+            $response['response'] = 504;
+        } else {
+            if($response = $this->_curl->getBody()) {
+                $response = (array)json_decode($response);
+                $this->logger->debug(['response:']);
+                $this->logger->debug($response);
+            }
         }
 
         return $response;

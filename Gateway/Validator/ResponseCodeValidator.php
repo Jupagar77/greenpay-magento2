@@ -17,6 +17,8 @@ class ResponseCodeValidator extends AbstractValidator
 {
     const RESULT_CODE = 'status';
 
+    const TIMEOUT_CODE = 504;
+
     const ERROR_MESSAGES = array(
         "01" => "Refer to Issuing Bank",
         "03" => "Invalid Commerce",
@@ -80,6 +82,13 @@ class ResponseCodeValidator extends AbstractValidator
      */
     private function isSuccessfulTransaction(array $response)
     {
+        //Validate timeout
+        if(isset($response['response'])) {
+            if($response['response'] == self::TIMEOUT_CODE) {
+                return true;
+            }
+        }
+
         return isset($response[self::RESULT_CODE]) && $response[self::RESULT_CODE] === ClientMock::SUCCESS;
     }
 

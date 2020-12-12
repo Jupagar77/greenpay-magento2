@@ -7,6 +7,8 @@ use Magento\Payment\Gateway\Data\PaymentDataObjectInterface;
 
 class GreenPayHandler implements HandlerInterface
 {
+    const TIMEOUT_CODE = 504;
+
     /**
      * @inheritdoc
      */
@@ -22,10 +24,23 @@ class GreenPayHandler implements HandlerInterface
         $paymentDO = $handlingSubject['payment'];
 
         $response = json_decode(json_encode($response), true);
-        if((boolean)$response['result']['success']) {
-            $payment = $paymentDO->getPayment();
-            $payment->setAdditionalInformation('retrieval_ref_num', $response['result']['retrieval_ref_num']);
-            $payment->setAdditionalInformation('authorization_id_resp', $response['result']['authorization_id_resp']);
+
+        //Validate timeout
+        if(isset($response['response'])) {
+            if($response['response'] == self::TIMEOUT_CODE) {
+                $payment = $paymentDO->getPayment();
+                $payment->setAdditionalInformation('timeout', true);
+
+                //Add session alert message
+            }
+        }
+
+        if(isset($response['result']['success'])) {
+            if((boolean)$response['result']['success']) {
+                $payment = $paymentDO->getPayment();
+                $payment->setAdditionalInformation('retrieval_ref_num', $response['result']['retrieval_ref_num']);
+                $payment->setAdditionalInformation('authorization_id_resp', $response['result']['authorization_id_resp']);
+            }
         }
     }
 }
