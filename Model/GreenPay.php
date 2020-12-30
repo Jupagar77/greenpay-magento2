@@ -53,7 +53,8 @@ class GreenPay implements \Bananacode\GreenPay\Api\GreenPayInterface
     public function checkout()
     {
         $hookResponse = file_get_contents('php://input');
-        $response = json_decode($hookResponse, true);
+        $response = (Array)json_decode(json_decode($hookResponse));
+
         if (isset($response['result']) && isset($response['orderId'])) {
             $searchCriteria = $this->_searchCriteriaBuilder
                 ->addFilter('increment_id', $response['orderId'], 'eq')
