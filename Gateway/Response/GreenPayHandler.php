@@ -23,15 +23,12 @@ class GreenPayHandler implements HandlerInterface
         /** @var PaymentDataObjectInterface $paymentDO */
         $paymentDO = $handlingSubject['payment'];
 
-        $response = json_decode(json_encode($response), true);
-
+        $response = (Array)json_decode(json_encode($response), true);
         //Validate timeout
         if(isset($response['response'])) {
             if($response['response'] == self::TIMEOUT_CODE) {
                 $payment = $paymentDO->getPayment();
                 $payment->setAdditionalInformation('timeout', true);
-
-                //Add session alert message
             }
         }
 

@@ -81,7 +81,7 @@ class CaptureRequest implements BuilderInterface
 
         return [
             'amount' => $this->formatPrice($this->subjectReader->readAmount($buildSubject)),
-            'payment_method_nonce' => (array)json_decode($payment->getAdditionalInformation('payment_method_nonce')),
+            'payment_method_nonce' => (Array)json_decode($payment->getAdditionalInformation('payment_method_nonce')),
             'order_increment' => $order->getOrderIncrementId(),
             'additional' => $this->getCustomerAdditionalData($order),
             'merchant_id' => $this->_encryptor->decrypt($this->config->getValue(

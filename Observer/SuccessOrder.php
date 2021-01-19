@@ -74,7 +74,6 @@ class SuccessOrder extends AbstractDataAssignObserver
                     ->setIsVisibleOnFront(false);
 
                 $order->addStatusHistory($history);
-
                 $this->_messageManager->addErrorMessage(__("Ha habido un problema de comunicación. Verifique su estado de cuenta antes de intentarlo de nuevo."));
             }
 

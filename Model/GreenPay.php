@@ -52,10 +52,11 @@ class GreenPay implements \Bananacode\GreenPay\Api\GreenPayInterface
      */
     public function checkout()
     {
+        $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/payment.log');
         $hookResponse = file_get_contents('php://input');
-        $response = (Array)json_decode(json_decode($hookResponse));
-
+        $response = (Array)json_decode($hookResponse);
         if (isset($response['result']) && isset($response['orderId'])) {
+            $response['result'] = (Array)$response['result'];
             $searchCriteria = $this->_searchCriteriaBuilder
                 ->addFilter('increment_id', $response['orderId'], 'eq')
                 ->create();
@@ -67,43 +68,26 @@ class GreenPay implements \Bananacode\GreenPay\Api\GreenPayInterface
             /** @var \Magento\Sales\Model\Order $order */
             $order = count($orderList) ? array_values($orderList)[0] : null;
             if ($order) {
-                $order->setGreenpayResponse($hookResponse);
-                if ((boolean)$response['result']['success']) {
-                    if ($order->canComment()) {
-                        $history = $this->_orderHistoryFactory->create()
-                            ->setStatus($this->getConfig('order_status'))
-                            ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
-                            ->setComment(
-                                __('GreenPay bank reference: %1.', $response['result']['retrieval_ref_num'])
-                            )->setIsCustomerNotified(false)
-                            ->setIsVisibleOnFront(false);
+                $this->addOrderComments($order, $hookResponse, $response);
+            } else {
+                $fails = 0;
+                while (!$order) {
+                    sleep(10);
+                    $fails++;
 
-                        $order->addStatusHistory($history);
+                    $orderList = $this->_orderRepository
+                        ->getList($searchCriteria)
+                        ->getItems();
 
-                        $history = $this->_orderHistoryFactory->create()
-                            ->setStatus($this->getConfig('order_status'))
-                            ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
-                            ->setComment(
-                                __('GreenPay bank authorization number: %1.', $response['result']['authorization_id_resp'])
-                            )->setIsCustomerNotified(false)
-                            ->setIsVisibleOnFront(false);
-
-                        $order->addStatusHistory($history);
-
-                        $this->_orderRepository->save($order);
+                    /** @var \Magento\Sales\Model\Order $order */
+                    $order = count($orderList) ? array_values($orderList)[0] : null;
+                    if ($order) {
+                        $this->addOrderComments($order, $hookResponse, $response);
+                    } else {
+                        if ($fails > 18) {
+                            $order = true;
+                        }
                     }
-                } else {
-                    $history = $this->_orderHistoryFactory->create()
-                        ->setStatus(\Magento\Sales\Model\Order::STATE_CANCELED)
-                        ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
-                        ->setComment(
-                            __('GreenPay order rejected')
-                        )->setIsCustomerNotified(false)
-                        ->setIsVisibleOnFront(false);
-
-                    $order->addStatusHistory($history);
-
-                    $this->_orderRepository->save($order);
                 }
             }
         }
@@ -119,6 +103,53 @@ class GreenPay implements \Bananacode\GreenPay\Api\GreenPayInterface
             "payment/greenpay/" . $config,
             \Magento\Store\Model\ScopeInterface::SCOPE_STORE
         );
+    }
+
+    /**
+     * @param $order
+     * @param $hookResponse
+     * @param $response
+     */
+    private function addOrderComments($order, $hookResponse, $response)
+    {
+        $order->setGreenpayResponse($hookResponse);
+        if ((boolean)$response['result']['success']) {
+            if ($order->canComment()) {
+                $history = $this->_orderHistoryFactory->create()
+                    ->setStatus($this->getConfig('order_status'))
+                    ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
+                    ->setComment(
+                        __('GreenPay bank reference: %1.', $response['result']['retrieval_ref_num'])
+                    )->setIsCustomerNotified(false)
+                    ->setIsVisibleOnFront(false);
+
+                $order->addStatusHistory($history);
+
+                $history = $this->_orderHistoryFactory->create()
+                    ->setStatus($this->getConfig('order_status'))
+                    ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
+                    ->setComment(
+                        __('GreenPay bank authorization number: %1.', $response['result']['authorization_id_resp'])
+                    )->setIsCustomerNotified(false)
+                    ->setIsVisibleOnFront(false);
+
+                $order->addStatusHistory($history);
+
+                $this->_orderRepository->save($order);
+            }
+        } else {
+            $history = $this->_orderHistoryFactory->create()
+                ->setStatus(\Magento\Sales\Model\Order::STATE_CANCELED)
+                ->setEntityName(\Magento\Sales\Model\Order::ENTITY)
+                ->setComment(
+                    __('GreenPay order rejected')
+                )->setIsCustomerNotified(false)
+                ->setIsVisibleOnFront(false);
+
+            $order->addStatusHistory($history);
+
+            $this->_orderRepository->save($order);
+        }
     }
 
 }

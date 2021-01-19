@@ -125,7 +125,7 @@ class ClientMock implements ClientInterface
         $this->_curl->setHeaders($headers);
         $this->_curl->post($url, json_encode($parameters));
         if($response  = $this->_curl->getBody()){
-            $response = (array)json_decode($response);
+            $response = (Array)json_decode($response);
             if (is_array($response)) {
                 if (isset($response['session']) && isset($response['token'])) {
                     return $response;
@@ -172,7 +172,7 @@ class ClientMock implements ClientInterface
             $response['response'] = 504;
         } else {
             if($response = $this->_curl->getBody()) {
-                $response = (array)json_decode($response);
+                $response = (Array)json_decode($response);
                 $this->logger->debug(['response:']);
                 $this->logger->debug($response);
             }
